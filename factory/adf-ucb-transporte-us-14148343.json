@@ -1,0 +1,10 @@
+{
+	"name": "adf-ucb-transporte-us-14148343",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "chilecentral"
+}
