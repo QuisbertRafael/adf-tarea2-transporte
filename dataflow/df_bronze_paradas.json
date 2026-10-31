@@ -57,6 +57,15 @@
 				},
 				{
 					"name": "union1"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "derivedColumn3"
 				}
 			],
 			"scriptLines": [
@@ -115,7 +124,7 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     ignoreNoFilesFound: false) ~> xls2023",
-				"csv select(mapColumn(",
+				"derivedColumn3 select(mapColumn(",
 				"          ParadaHistoricaId = nro_parada,",
 				"          NombreParada = nombre_parada,",
 				"          Zona = zona,",
@@ -127,7 +136,7 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
-				"xls2022 select(mapColumn(",
+				"derivedColumn1 select(mapColumn(",
 				"          ParadaHistoricaId = nro_parada,",
 				"          NombreParada = nombre_parada,",
 				"          Zona = zona,",
@@ -139,7 +148,7 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select2",
-				"xls2023 select(mapColumn(",
+				"derivedColumn2 select(mapColumn(",
 				"          ParadaHistoricaId = nro_parada,",
 				"          NombreParada = nombre_parada,",
 				"          Zona = zona,",
@@ -152,6 +161,9 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select3",
 				"select1, sql, select2, select3 union(byName: true)~> union1",
+				"xls2022 derive(AnioFuente = '2022') ~> derivedColumn1",
+				"xls2023 derive(AnioFuente = 2023) ~> derivedColumn2",
+				"csv derive(AnioFuente = toString(year(toDate(fecha_desde, 'dd/MM/yyyy')))) ~> derivedColumn3",
 				"union1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
