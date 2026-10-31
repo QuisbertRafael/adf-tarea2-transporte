@@ -15,10 +15,21 @@
 					"name": "source1"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "dw_silver_paradas_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
+				},
+				{
+					"name": "split1"
 				}
 			],
 			"scriptLines": [
@@ -41,7 +52,31 @@
 				"source1 derive(ParadaHistoricaId = trim(ParadaHistoricaId),",
 				"          NombreParada = trim(NombreParada),",
 				"          Zona = upper(trim(Zona)),",
-				"          Estado = upper(trim(Estado))) ~> derivedColumn1"
+				"          Estado = upper(trim(Estado))) ~> derivedColumn1",
+				"derivedColumn1 split(!isNull(AnioFuente) && !isNull(ParadaHistoricaId) && !isNull(CodigoPublicado) && !isNull(NombreParada) && !isNull(Zona) && !isNull(Latitud) && !isNull(Longitud) && !isNull(VigenciaDesde) && !isNull(VigenciaHasta) && !isNull(Estado) && VigenciaDesde <= VigenciaHasta,",
+				"     disjoint: false) ~> split1@(Validas, NoValidas)",
+				"split1@Validas sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          AnioFuente as integer,",
+				"          ParadaHistoricaId as string,",
+				"          CodigoPublicado as string,",
+				"          NombreParada as string,",
+				"          Zona as string,",
+				"          Latitud as decimal(9,6),",
+				"          Longitud as decimal(9,6),",
+				"          VigenciaDesde as date,",
+				"          VigenciaHasta as date,",
+				"          Estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
 			]
 		}
 	}
