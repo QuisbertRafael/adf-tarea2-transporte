@@ -13,6 +13,20 @@
 						"type": "DatasetReference"
 					},
 					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_silver_rutas_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sourceRutas"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_silver_paradas_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sourceParadas"
 				}
 			],
 			"sinks": [
@@ -36,6 +50,12 @@
 				},
 				{
 					"name": "filter1"
+				},
+				{
+					"name": "existenRutas"
+				},
+				{
+					"name": "existenParadas"
 				}
 			],
 			"scriptLines": [
@@ -55,6 +75,37 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
+				"source(output(",
+				"          AnioFuente as integer,",
+				"          RutaHistoricaId as string,",
+				"          CodigoRuta as string,",
+				"          NombreRuta as string,",
+				"          Origen as string,",
+				"          Destino as string,",
+				"          VigenciaDesde as date,",
+				"          VigenciaHasta as date,",
+				"          Estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> sourceRutas",
+				"source(output(",
+				"          AnioFuente as integer,",
+				"          ParadaHistoricaId as string,",
+				"          CodigoPublicado as string,",
+				"          NombreParada as string,",
+				"          Zona as string,",
+				"          Latitud as decimal(9,6),",
+				"          Longitud as decimal(9,6),",
+				"          VigenciaDesde as date,",
+				"          VigenciaHasta as date,",
+				"          Estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> sourceParadas",
 				"source1 derive(AnioFuente = toInteger(AnioFuente),",
 				"          DemandaId = trim(DemandaId),",
 				"          ParadaHistoricaId = trim(ParadaHistoricaId),",
@@ -76,7 +127,15 @@
 				"     desc(FechaServicio, true),",
 				"     NumeroFila = rowNumber()) ~> window1",
 				"window1 filter(NumeroFila == 1) ~> filter1",
-				"filter1 sink(allowSchemaDrift: true,",
+				"filter1, sourceRutas exists(split1@demandaValidas@AnioFuente == sourceRutas@AnioFuente",
+				"     && split1@demandaValidas@RutaHistoricaId == sourceRutas@RutaHistoricaId,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> existenRutas",
+				"existenRutas, sourceParadas exists(split1@demandaValidas@AnioFuente == sourceParadas@AnioFuente",
+				"     && split1@demandaValidas@ParadaHistoricaId == sourceParadas@ParadaHistoricaId,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> existenParadas",
+				"existenParadas sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          AnioFuente as integer,",
