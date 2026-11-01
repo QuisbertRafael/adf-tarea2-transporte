@@ -43,10 +43,10 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
-				"source1 derive(AnioFuente = toShort(AnioFuente),",
-				"          IncidenteId = trim(IncidenteId),",
+				"source1 derive(IncidenteId = trim(IncidenteId),",
 				"          RutaHistoricaId = trim(RutaHistoricaId),",
-				"          EsPrincipal = toBoolean(EsPrincipal)) ~> derivedColumn1",
+				"          EsPrincipal = toBoolean(EsPrincipal),",
+				"          AnioFuente = toInteger(AnioFuente)) ~> derivedColumn1",
 				"derivedColumn1 split(!isNull(AnioFuente) && !isNull(IncidenteId) && !isNull(RutaHistoricaId) && !isNull(EsPrincipal),",
 				"     disjoint: false) ~> split1@(relacionesValidas, relacionesNoValidas)",
 				"split1@relacionesValidas sink(allowSchemaDrift: true,",
@@ -64,7 +64,13 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          AnioFuente,",
+				"          IncidenteId,",
+				"          RutaHistoricaId,",
+				"          EsPrincipal",
+				"     )) ~> sink1"
 			]
 		}
 	}
