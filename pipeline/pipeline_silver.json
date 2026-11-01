@@ -130,6 +130,8 @@
 			{
 				"name": "df_silver_demanda_paradas",
 				"type": "ExecuteDataFlow",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "df_silver_viajes",
@@ -161,6 +163,8 @@
 			{
 				"name": "df_silver_incidentes",
 				"type": "ExecuteDataFlow",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "df_silver_demanda_paradas",
