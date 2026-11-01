@@ -13,6 +13,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_silver_incidentes_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sourceIncidentes"
 				}
 			],
 			"sinks": [
@@ -36,6 +43,9 @@
 				},
 				{
 					"name": "filter1"
+				},
+				{
+					"name": "exists1"
 				}
 			],
 			"scriptLines": [
@@ -49,18 +59,37 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
+				"source(output(",
+				"          AnioFuente as integer,",
+				"          IncidenteId as string,",
+				"          TipoIncidente as string,",
+				"          Severidad as string,",
+				"          FechaHoraInicio as timestamp,",
+				"          FechaHoraFin as timestamp,",
+				"          FechaHoraRegistro as timestamp,",
+				"          VehiculoId as string,",
+				"          Descripcion as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> sourceIncidentes",
 				"source1 derive(IncidenteId = trim(IncidenteId),",
 				"          RutaHistoricaId = trim(RutaHistoricaId),",
 				"          EsPrincipal = toBoolean(EsPrincipal),",
 				"          AnioFuente = toInteger(AnioFuente)) ~> derivedColumn1",
 				"derivedColumn1 split(!isNull(AnioFuente) && !isNull(IncidenteId) && !isNull(RutaHistoricaId) && !isNull(EsPrincipal),",
 				"     disjoint: false) ~> split1@(relacionesValidas, relacionesNoValidas)",
-				"split1@relacionesValidas window(over(AnioFuente,",
+				"exists1 window(over(AnioFuente,",
 				"          IncidenteId,",
 				"          RutaHistoricaId),",
 				"     desc(EsPrincipal, true),",
 				"     NumeroFila = rowNumber()) ~> window1",
 				"window1 filter(NumeroFila == 1) ~> filter1",
+				"split1@relacionesValidas, sourceIncidentes exists(split1@relacionesValidas@AnioFuente == sourceIncidentes@AnioFuente",
+				"     && split1@relacionesValidas@IncidenteId == sourceIncidentes@IncidenteId,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> exists1",
 				"filter1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
