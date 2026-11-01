@@ -13,6 +13,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "source1"
+				},
+				{
+					"dataset": {
+						"referenceName": "dw_silver_vehiculos_sql",
+						"type": "DatasetReference"
+					},
+					"name": "source2"
 				}
 			],
 			"sinks": [
@@ -36,6 +43,9 @@
 				},
 				{
 					"name": "filter1"
+				},
+				{
+					"name": "exists1"
 				}
 			],
 			"scriptLines": [
@@ -54,6 +64,20 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
+				"source(output(",
+				"          AnioFuente as integer,",
+				"          VehiculoId as string,",
+				"          Placa as string,",
+				"          TipoVehiculo as string,",
+				"          CapacidadEfectiva as integer,",
+				"          VigenciaDesde as date,",
+				"          VigenciaHasta as date,",
+				"          Estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source2",
 				"source1 derive(AnioFuente = toShort(AnioFuente),",
 				"          IncidenteId = trim(IncidenteId),",
 				"          TipoIncidente = upper(trim(TipoIncidente)),",
@@ -69,11 +93,15 @@
 				"          FechaHoraRegistro = iif(     isDate(FechaHoraRegistro, 'dd/MM/yyyy'),     toTimestamp(         concat(FechaHoraRegistro, ' 00:00:00'),         'dd/MM/yyyy HH:mm:ss'     ),     toTimestamp(FechaHoraRegistro, 'yyyy-MM-dd HH:mm:ss') )) ~> derivedColumn1",
 				"derivedColumn1 split(!isNull(AnioFuente) && !isNull(IncidenteId) && !isNull(TipoIncidente) && !isNull(Severidad) && !isNull(FechaHoraInicio) && !isNull(FechaHoraFin) && !isNull(FechaHoraRegistro) && !isNull(Descripcion) && FechaHoraInicio <= FechaHoraFin,",
 				"     disjoint: false) ~> split1@(incidentesValidos, incidentesNoValidos)",
-				"split1@incidentesValidos window(over(AnioFuente,",
+				"exists1 window(over(AnioFuente,",
 				"          IncidenteId),",
 				"     desc(FechaHoraInicio, true),",
 				"     NumeroFila = rowNumber()) ~> window1",
 				"window1 filter(NumeroFila == 1) ~> filter1",
+				"split1@incidentesValidos, source2 exists(split1@incidentesValidos@AnioFuente == source2@AnioFuente",
+				"     && split1@incidentesValidos@VehiculoId == source2@VehiculoId,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> exists1",
 				"filter1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
