@@ -30,6 +30,12 @@
 				},
 				{
 					"name": "split1"
+				},
+				{
+					"name": "window1"
+				},
+				{
+					"name": "filter1"
 				}
 			],
 			"scriptLines": [
@@ -70,7 +76,12 @@
 				"!isNull(Estado) &&\r",
 				"VigenciaDesde <= VigenciaHasta && VigenciaDesde <= VigenciaHasta,",
 				"     disjoint: false) ~> split1@(Validas, NoValidas)",
-				"split1@Validas sink(allowSchemaDrift: true,",
+				"split1@Validas window(over(AnioFuente,",
+				"          ParadaHistoricaId),",
+				"     desc(VigenciaDesde, true),",
+				"     NumeroFila = rowNumber()) ~> window1",
+				"window1 filter(NumeroFila == 1) ~> filter1",
+				"filter1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          AnioFuente as integer,",

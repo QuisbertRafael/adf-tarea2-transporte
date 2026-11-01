@@ -30,6 +30,12 @@
 				},
 				{
 					"name": "split1"
+				},
+				{
+					"name": "window1"
+				},
+				{
+					"name": "filter1"
 				}
 			],
 			"scriptLines": [
@@ -49,7 +55,13 @@
 				"          AnioFuente = toInteger(AnioFuente)) ~> derivedColumn1",
 				"derivedColumn1 split(!isNull(AnioFuente) && !isNull(IncidenteId) && !isNull(RutaHistoricaId) && !isNull(EsPrincipal),",
 				"     disjoint: false) ~> split1@(relacionesValidas, relacionesNoValidas)",
-				"split1@relacionesValidas sink(allowSchemaDrift: true,",
+				"split1@relacionesValidas window(over(AnioFuente,",
+				"          IncidenteId,",
+				"          RutaHistoricaId),",
+				"     desc(EsPrincipal, true),",
+				"     NumeroFila = rowNumber()) ~> window1",
+				"window1 filter(NumeroFila == 1) ~> filter1",
+				"filter1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          AnioFuente as integer,",
